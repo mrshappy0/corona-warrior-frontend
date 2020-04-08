@@ -134,6 +134,131 @@ class Dude {
   }
 }
 
+// class Orb {
+//   constructor(goodOrbMesh, speed, id, scene, scaling) {
+//     this.goodOrbMesh = goodOrbMesh;
+//     this.id = id;
+//     this.scene = scene;
+//     // goodOrbMesh.Orb = this;
+//     if (speed) {
+//       this.speed = speed;
+//     } else {
+//       this.speed = 0.1;
+//     }
+//     if (scaling) {
+//       this.scaling = scaling;
+//       goodOrbMesh.scaling = new BABYLON.Vector3(
+//         this.scaling,
+//         this.scaling,
+//         this.scaling
+//         );
+//         console.log("hit")
+//     } else {
+//       this.scaling = 0.1;
+//     }
+//   if (Orb.boundingBoxParameters == undefined) {
+//     Orb.boundingBoxParameters = this.CalculateBoundingBoxParameters();
+//   }
+//   this.bounder = this.createBoundingBox();
+//   this.bounder.goodOrbMesh = this.goodOrbMesh;
+// }
+// createBoundingBox() {
+//   var lengthX = Dude.boundingBoxParameters.lengthX;
+//   var lengthY = Dude.boundingBoxParameters.lengthY;
+//   var lengthZ = Dude.boundingBoxParameters.lengthZ;
+//   var bounder = new BABYLON.Mesh.CreateBox(
+//     "bounder" + this.id,
+//     1,
+//     this.scene
+//   );
+//   bounder.scaling.x = lengthX * this.scaling;
+//   bounder.scaling.y = lengthY * this.scaling;
+//   bounder.scaling.z = lengthZ * this.scaling;
+
+//   bounder.isVisible = true;
+//   var bounderMaterial = new BABYLON.StandardMaterial(
+//     "bounderMaterial",
+//     this.scene
+//   );
+//   bounderMaterial.alpha = 0.5;
+//   bounder.material = bounderMaterial;
+//   bounder.checkCollisions = true;
+
+//   (bounder.position = new BABYLON.Vector3(
+//     this.goodOrbMesh.position.x,
+//     this.goodOrbMesh.position.y + (this.scaling * lengthY) / 2
+//   )),
+//     this.goodOrbMesh.position.z;
+//   return bounder;
+// }
+
+// CalculateBoundingBoxParameters() {
+//   var minX = 9999999;
+//   var minY = 9999999;
+//   var minZ = 9999999;
+//   var maxX = -9999999;
+//   var maxY = -9999999;
+//   var maxZ = -9999999;
+
+//   var children = this.goodOrbMesh.getChildren();
+
+//   for (var i = 0; i < children.length; i++) {
+//     var positions = new BABYLON.VertexData.ExtractFromGeometry(children[i])
+//       .positions;
+//     if (!positions) continue;
+//     for (var j = 0; j < positions.length; j += 3) {
+//       if (positions[j] < minX) {
+//         minX = positions[j];
+//       }
+//       if (positions[j] > maxX) {
+//         maxX = positions[j];
+//       }
+//     }
+//     for (var j = 1; j < positions.length; j += 3) {
+//       if (positions[j] < minY) {
+//         minY = positions[j];
+//       }
+//       if (positions[j] > maxY) {
+//         maxY = positions[j];
+//       }
+//     }
+//     for (var j = 2; j < positions.length; j += 3) {
+//       if (positions[j] < minZ) {
+//         minZ = positions[j];
+//       }
+//       if (positions[j] > maxZ) {
+//         maxZ = positions[j];
+//       }
+//     }
+//     var _lengthX = maxX - minX;
+//     var _lengthY = maxY - minY;
+//     var _lengthZ = maxZ - minZ;
+//   }
+//   return { lengthX: _lengthX, lengthY: _lengthY, lengthZ: _lengthZ };
+// }
+
+// move() {
+//   if (!this.bounder) return;
+//   this.dudeMesh.position = new BABYLON.Vector3(
+//     this.bounder.position.x,
+//     this.bounder.position.y -
+//       (this.scaling * Dude.boundingBoxParameters.lengthY) / 2,
+//     this.bounder.position.z
+//   );
+//   var tank = scene.getMeshByName("heroTank");
+//   var direction = tank.position.subtract(this.dudeMesh.position);
+//   var distance = direction.length();
+//   var dir = direction.normalize();
+//   var alpha = Math.atan2(-1 * dir.x, -1 * dir.z);
+//   this.dudeMesh.rotation.y = alpha;
+//   if (distance > 30) {
+//     this.bounder.moveWithCollisions(
+//       dir.multiplyByFloats(this.speed, this.speed, this.speed)
+//     );
+//   }
+// }
+// }
+
 function startGame() {
   canvas = document.getElementById("renderCanvas");
   engine = new BABYLON.Engine(canvas, true);
@@ -146,8 +271,23 @@ function startGame() {
     tank.move();
     tank.fireCannonBalls();
     tank.fireLaserBeams();
-    moveHeroDude();
-    moveOtherDudes();
+    var goodOrb = scene.getMeshByName("goodOrb")
+    if(goodOrb){
+      // console.log("hit")
+      goodOrb.move();
+    }
+    var badOrb = scene.getMeshByName("badOrb")
+    if(badOrb){
+      // console.log("hit")
+      badOrb.move();
+    }
+    // var cloneGoodOrb = scene.getMeshByName("cloneGoodOrbs")
+    // if(cloneGoodOrb){
+    //   myClone.move()
+    // }
+    // moveGoodOrb();
+    // moveHeroDude();
+    // moveOtherDudes();
     scene.render();
   };
   engine.runRenderLoop(toRender);
@@ -167,7 +307,7 @@ var createScene = function () {
   // createSky(scene);
   createLights(scene);
   createBadOrb(scene);
-  createGoodOrb(scene, -17, 10, 30);
+  createGoodOrb(scene);
   // createHeroDude(scene);
   createRingSystem(scene);
   return scene;
@@ -288,47 +428,68 @@ function createBadOrb(scene) {
     "./",
     "coronaOrb.babylon",
     scene,
-    function (meshes, particleSystems, skeletons) {
-      // do something with th
-      meshes[0].position = new BABYLON.Vector3(50, 10, 30);
-      meshes[0].scaling = new BABYLON.Vector3(0.15, 0.15, 0.15);
-      // meshes[0].rotation.y = 3.129;
-      var coronaOrbMaterial = new BABYLON.StandardMaterial(
-        "badOrbMaterial",
-        scene
-      );
-      coronaOrbMaterial.diffuseTexture = new BABYLON.Texture(
-        "images/coronadiffuse.png",
-        scene
-      );
-      meshes[0].material = coronaOrbMaterial;
-    }
+    onBadOrbdImport
   );
+  function onBadOrbdImport(meshes, particleSystems, skeletons) {
+    meshes[0].position = new BABYLON.Vector3(50, 10, 30);
+    meshes[0].scaling = new BABYLON.Vector3(0.15, 0.15, 0.15);
+    var coronaOrbMaterial = new BABYLON.StandardMaterial(
+      "badOrbMaterial",
+      scene
+    );
+    coronaOrbMaterial.diffuseTexture = new BABYLON.Texture(
+      "images/coronadiffuse.png",
+      scene
+    );
+    meshes[0].material = coronaOrbMaterial;
+    meshes[0].name = "badOrb";
+    var badOrb = meshes[0];
+    badOrb.move = function(){
+      badOrb.rotation.y += 0.05;
+      badOrb.rotation.x += 0.05;
+    }
+  }
 }
 
-function createGoodOrb(scene, x, y, z) {
-  var i = 0;
-  var orbArray = [];
-  while (i < 11) {
-    BABYLON.SceneLoader.ImportMesh("", "./", "goodOrbTho.glb", scene, function (
-      meshes,
-      particleSystems,
-      skeletons
-    ) {
-      // -17, 10, 30
-      meshes[0].scaling = new BABYLON.Vector3(-0.055, 0.055, 0.055);
-      meshes[0].position.x = x;
-      meshes[0].position.y = y;
-      meshes[0].position.z += z;
-      orbArray.push(meshes[0]);
-    });
-    i++;
+function createGoodOrb(scene) {
+  BABYLON.SceneLoader.ImportMesh(
+    "",
+    "./",
+    "scene.glb",
+    // "goodOrbTho.glb",
+    scene,
+    onOrbImport
+  );
+  function onOrbImport(meshes, particleSystems, skeletons) {
+    meshes[0].scaling = new BABYLON.Vector3(-0.055, 0.055, 0.055);
+    meshes[0].position = new BABYLON.Vector3(-17, 10, 30);
+    meshes[0].name = "goodOrb";
+    var goodOrb = meshes[0];
+    goodOrb.move = function(){
+      goodOrb.addRotation(0, -0.05, 0);
+    }
+    scene.goodOrbs = [];
+    scene.goodOrbs[0] = goodOrb;
+    for (var q = 1; q <= 5; q++) {
+      scene.goodOrbs[q] = cloneGoodOrb(goodOrb, skeletons, q);
+      // var temps = new Orb(scene.goodOrbs[q], 2, q, scene, 0.15);
+    }
   }
-  console.log(orbArray.position.z);
-  // orbArray.forEach((orb, i) => {
-  //   orb.position.z += i;
-  // });
-  return orbArray;
+}
+
+function cloneGoodOrb(original, skeletons, id) {
+  var myClone;
+  var xrand = Math.floor(Math.random() * 501) - 250;
+  var zrand = Math.floor(Math.random() * 501) - 250;
+  myClone = original.clone("clone_" + id);
+  myClone.name = "cloneGoodOrbs";
+  myClone.position = new BABYLON.Vector3(xrand, 5, zrand);
+  myClone.move = function(){
+    myClone.addRotation(0, -0.05, 0);
+  }
+
+  
+  return myClone;
 }
 
 function createRingSystem(scene) {
@@ -449,11 +610,11 @@ function doClone(original, skeletons, id) {
   }
 }
 
-function modifySettings() {
-  scene.onPointerDown = function () {
-    canvas.requestPointerLock();
-  };
-}
+// function modifySettings() {
+//   scene.onPointerDown = function () {
+//     canvas.requestPointerLock();
+//   };
+// }
 
 function createTank() {
   var tank = new BABYLON.MeshBuilder.CreateBox(
