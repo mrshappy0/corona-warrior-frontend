@@ -182,8 +182,8 @@ var createScene = function () {
   var freeCamera = createUniversalCamera(scene);
   var tank = createTank(scene);
   var followCamera = createFollowCamera(scene, tank);
-  // scene.activeCamera = freeCamera;
-  scene.activeCamera = followCamera;
+  scene.activeCamera = freeCamera;
+  // scene.activeCamera = followCamera;
   createSky(scene);
   createLights(scene);
   createScifiFloor(scene);
@@ -308,11 +308,11 @@ function createScifiFloor(scene) {
   BABYLON.SceneLoader.ImportMesh(
     null,
     "./",
-    "scifi-floor.glb",
+    "finish-floor.glb",
     scene,
-    (meshes, particleSystems, skeletons, animationGroups) => {
-      meshes[0].scaling = new BABYLON.Vector3(2, 2, 2);
-      meshes[0].position = new BABYLON.Vector3(0, 2, -380);
+    (meshes, particleSystems, skeletons) => {
+      meshes[0].scaling = new BABYLON.Vector3(10, 10, 10);
+      meshes[0].position = new BABYLON.Vector3(-350, 0.1, 100);
     }
   );
 }
