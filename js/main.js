@@ -156,7 +156,7 @@ function startGame() {
       if (cloneBadOrb) {
         cloneBadOrb.move();
       }
-    })
+    });
 
     numArray.forEach((elem) => {
       var cloneGoodOrb = scene.getMeshByName(`cloneGoodOrbs_${elem}`);
@@ -167,6 +167,7 @@ function startGame() {
     // moveGoodOrb();
     // moveHeroDude();
     // moveOtherDudes();
+
     scene.render();
   };
   engine.runRenderLoop(toRender);
@@ -185,6 +186,8 @@ var createScene = function () {
   scene.activeCamera = followCamera;
   createSky(scene);
   createLights(scene);
+  createScifiFloor(scene);
+  createFlyingSaucer(scene, tank);
   createBadOrb(scene);
   createGoodOrb(scene);
   // createHeroDude(scene);
@@ -301,6 +304,33 @@ function createUniversalCamera(scene) {
   return camera;
 }
 
+function createScifiFloor(scene) {
+  BABYLON.SceneLoader.ImportMesh(
+    null,
+    "./",
+    "scifi-floor.glb",
+    scene,
+    (meshes, particleSystems, skeletons, animationGroups) => {
+      meshes[0].scaling = new BABYLON.Vector3(2, 2, 2);
+      meshes[0].position = new BABYLON.Vector3(0, 2, -380);
+    }
+  );
+}
+
+function createFlyingSaucer(scene, tank) {
+  BABYLON.SceneLoader.ImportMesh(
+    null,
+    "./",
+    "flying-saucer.glb",
+    scene,
+    (meshes, particleSystems, skeletons, animationGroups) => {
+      animationGroups[0].start(true);
+      meshes[0].scaling = new BABYLON.Vector3(5, 5, 5);
+      meshes[0].position = tank.position;
+    }
+  );
+}
+
 function createBadOrb(scene) {
   BABYLON.SceneLoader.ImportMesh(
     "",
@@ -322,7 +352,7 @@ function createBadOrb(scene) {
     );
     meshes[0].material = coronaOrbMaterial;
     meshes[0].name = "badOrb";
-    var badOrb = meshes[0]
+    var badOrb = meshes[0];
     scene.badOrbs = [];
     scene.badOrbs[0] = badOrb;
     for (var q = 1; q <= 50; q++) {
@@ -528,9 +558,9 @@ function createTank() {
   tank.frontVector = new BABYLON.Vector3(0, 0, 1);
   tank.canFireCannonBalls = true;
   tank.canFireLaser = true;
+  tank.visibility = false;
   // tank.isPickable = false;
   tank.move = function () {
-    // console.log(tank.position)
     if (isWPressed) {
       if (tank.position.y > 2) {
         tank.moveWithCollisions(new BABYLON.Vector3(0, -1, 0));
