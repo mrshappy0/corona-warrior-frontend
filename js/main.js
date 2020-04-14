@@ -8,6 +8,10 @@ var isDPressed = false;
 var isBPressed = false;
 var isRPressed = false;
 
+let winBoxAlert = document.createElement("h1");
+winBoxAlert.innerText = "You fucking saved civilization!";
+let body = document.querySelector("body");
+
 document.addEventListener("DOMContentLoaded", startGame);
 
 class Dude {
@@ -146,6 +150,11 @@ function startGame() {
     tank.move();
     tank.fireCannonBalls();
     tank.fireLaserBeams();
+    var vaccine = scene.getMeshByName("vaccine");
+    if (vaccine) {
+      // console.log("vaccine");
+      vaccine.move();
+    }
     var goodOrb = scene.getMeshByName("goodOrb");
     if (goodOrb) {
       goodOrb.move();
@@ -164,6 +173,38 @@ function startGame() {
         cloneGoodOrb.move();
       }
     });
+    // console.log(tank.position)
+    const winRangeZ = [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63];
+    const winRangeX = [
+      -344,
+      -345,
+      -346,
+      -347,
+      -348,
+      -349,
+      -350,
+      -351,
+      -352,
+      -353,
+      -354,
+      -355,
+      -356,
+    ];
+    function doArrayThang(array, position) {
+      if (array.find((element) => element == position)) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+    if (
+      doArrayThang(winRangeZ, Math.round(tank.position.z)) &&
+      doArrayThang(winRangeX, Math.round(tank.position.x))
+    ) {
+      engine.stopRenderLoop();
+      body.prepend(winBoxAlert);
+    }
+
     // moveGoodOrb();
     // moveHeroDude();
     // moveOtherDudes();
@@ -179,14 +220,16 @@ var createScene = function () {
   var gravityVector = new BABYLON.Vector3(0, -9.81, 0);
   scene.enablePhysics(gravityVector, physicsPlugin);
   var ground = CreateGround(scene);
+
   var freeCamera = createUniversalCamera(scene);
   var tank = createTank(scene);
   var followCamera = createFollowCamera(scene, tank);
-  scene.activeCamera = freeCamera;
-  // scene.activeCamera = followCamera;
+  // scene.activeCamera = freeCamera;
+  scene.activeCamera = followCamera;
   createSky(scene);
   createLights(scene);
   createScifiFloor(scene);
+  createAtomOrb(scene);
   createFlyingSaucer(scene, tank);
   createBadOrb(scene);
   createGoodOrb(scene);
@@ -228,6 +271,7 @@ function CreateGround(scene) {
       "images/grass.jpg",
       scene
     );
+    scene.ground = ground;
     ground.material = groundMaterial;
     ground.checkCollisions = true;
     ground.physicsImpostor = new BABYLON.PhysicsImpostor(
@@ -236,6 +280,42 @@ function CreateGround(scene) {
       { mass: 0 },
       scene
     );
+    var stoneFloor = BABYLON.MeshBuilder.CreatePlane(
+      "myPlane",
+      { width: 800, height: 400 },
+      scene
+    );
+    // stoneFloor.position.y = 1
+    stoneFloor.rotate(BABYLON.Axis.X, Math.PI / 2, BABYLON.Space.WORLD);
+    stoneFloor.position.y = 0.3;
+    stoneFloor.position.z = -200;
+    var stoneFloorMaterial = new BABYLON.StandardMaterial(
+      "stoneFloorMaterial",
+      scene
+    );
+    stoneFloorMaterial.diffuseTexture = new BABYLON.Texture(
+      "images/hexagon-600-1200.png",
+      scene
+    );
+    stoneFloor.material = stoneFloorMaterial;
+    var stoneFloor = BABYLON.MeshBuilder.CreatePlane(
+      "myPlane",
+      { width: 800, height: 400 },
+      scene
+    );
+    // stoneFloor.position.y = 1
+    stoneFloor.rotate(BABYLON.Axis.X, Math.PI / 2, BABYLON.Space.WORLD);
+    stoneFloor.position.y = 0.3;
+    stoneFloor.position.z = 205;
+    var stoneFloorMaterial = new BABYLON.StandardMaterial(
+      "stoneFloorMaterial",
+      scene
+    );
+    stoneFloorMaterial.diffuseTexture = new BABYLON.Texture(
+      "images/ground-2.jpg",
+      scene
+    );
+    stoneFloor.material = stoneFloorMaterial;
   }
   return ground;
 }
@@ -304,6 +384,29 @@ function createUniversalCamera(scene) {
   return camera;
 }
 
+function createAtomOrb(scene) {
+  BABYLON.SceneLoader.ImportMesh(
+    null,
+    "./",
+    "animated-atom.glb",
+    scene,
+    (meshes, particleSystems, skeletons, animationGroups) => {
+      meshes[0].scaling = new BABYLON.Vector3(35, 35, 35);
+      meshes[0].position = new BABYLON.Vector3(
+        scene.finishFloor.position.x,
+        40,
+        57
+      );
+      meshes[0].name = "vaccine";
+      animationGroups[0].start(true);
+      var vaccine = meshes[0];
+      vaccine.move = function () {
+        vaccine.addRotation(0.05, -0.05, 0.05);
+      };
+    }
+  );
+}
+
 function createScifiFloor(scene) {
   BABYLON.SceneLoader.ImportMesh(
     null,
@@ -311,8 +414,11 @@ function createScifiFloor(scene) {
     "finish-floor.glb",
     scene,
     (meshes, particleSystems, skeletons) => {
+      meshes[0].name = "finishFloor";
       meshes[0].scaling = new BABYLON.Vector3(10, 10, 10);
       meshes[0].position = new BABYLON.Vector3(-350, 0.1, 100);
+      var finishFloor = meshes[0];
+      scene.finishFloor = finishFloor;
     }
   );
 }
@@ -325,7 +431,7 @@ function createFlyingSaucer(scene, tank) {
     scene,
     (meshes, particleSystems, skeletons, animationGroups) => {
       animationGroups[0].start(true);
-      meshes[0].scaling = new BABYLON.Vector3(5, 5, 5);
+      meshes[0].scaling = new BABYLON.Vector3(7, 7, 7);
       meshes[0].position = tank.position;
     }
   );
@@ -358,11 +464,6 @@ function createBadOrb(scene) {
     for (var q = 1; q <= 50; q++) {
       scene.badOrbs[q] = cloneBadOrb(badOrb, skeletons, q);
     }
-    // var badOrb = meshes[0];
-    // badOrb.move = function () {
-    //   badOrb.rotation.y += 0.05;
-    //   badOrb.rotation.x += 0.05;
-    // };
   }
 }
 
@@ -371,13 +472,25 @@ function cloneBadOrb(original, skeletons, id) {
   var range = 750;
   var xrand = range / 2 - Math.random() * range;
   var zrand = range / 2 - Math.random() * range;
+  var yrand = scene.ground.getHeightAtCoordinates(xrand, zrand);
   var rotChange = Math.random();
   myClone = original.clone("clone_" + id);
   myClone.name = "cloneBadOrbs_" + id;
-  myClone.position = new BABYLON.Vector3(xrand, 5, zrand);
+  myClone.position = new BABYLON.Vector3(xrand, yrand + 5, zrand);
+  var badBounder = BABYLON.MeshBuilder.CreateBox(
+    "badBounder_" + id,
+    { height: 8, width: 8, depth: 8 },
+    scene
+  );
+  badBounder.position = myClone.position;
+  badBounder.visibility = 0.5;
+  badBounder.checkCollisions = true;
   myClone.move = function () {
     myClone.addRotation(0, -0.05 * rotChange, 0);
   };
+  myClone.dispose = function (){
+    myClone.dispose()
+  }
 }
 
 function createGoodOrb(scene) {
@@ -389,7 +502,7 @@ function createGoodOrb(scene) {
     onOrbImport
   );
   function onOrbImport(meshes, particleSystems, skeletons) {
-    meshes[0].scaling = new BABYLON.Vector3(-0.055, 0.055, 0.055);
+    meshes[0].scaling = new BABYLON.Vector3(-0.035, 0.035, 0.035);
     meshes[0].position = new BABYLON.Vector3(-17, 10, 30);
     meshes[0].name = "goodOrb";
     var goodOrb = meshes[0];
@@ -409,10 +522,11 @@ function cloneGoodOrb(original, skeletons, id) {
   var range = 750;
   var xrand = range / 2 - Math.random() * range;
   var zrand = range / 2 - Math.random() * range;
+  var yrand = scene.ground.getHeightAtCoordinates(xrand, zrand);
   var rotChange = Math.random();
   myClone = original.clone("clone_" + id);
   myClone.name = "cloneGoodOrbs_" + id;
-  myClone.position = new BABYLON.Vector3(xrand, 5, zrand);
+  myClone.position = new BABYLON.Vector3(xrand, yrand + 5, zrand);
   myClone.move = function () {
     myClone.addRotation(0, -0.05 * rotChange, 0);
   };
@@ -453,19 +567,19 @@ function createRingSystem(scene) {
   m.rotation.y = (1 * Math.PI) / 180;
   m.visibility = false;
 
-  var m = BABYLON.MeshBuilder.CreateBox(
-    "ringbounder1",
+  var n = BABYLON.MeshBuilder.CreateBox(
+    "ringbounder2",
     { height: 70, width: 25, depth: 285 },
     scene
   );
   // m.scaling.copyFrom(size);
-  m.position = new BABYLON.Vector3(-42, 2, 157);
+  n.position = new BABYLON.Vector3(-42, 2, 157);
   // m.visibility = 0.5;
-  m.checkCollisions = true;
+  n.checkCollisions = true;
   // m.rotation.z = 0.14;
-  m.rotation.y = -((2 * Math.PI) / 180);
+  n.rotation.y = -((2 * Math.PI) / 180);
   // m.rotate.x = 1
-  m.visibility = false;
+  n.visibility = false;
 }
 
 function createHeroDude(scene) {
@@ -535,12 +649,13 @@ function doClone(original, skeletons, id) {
     }
   }
 }
-
+//#region
 // function modifySettings() {
 //   scene.onPointerDown = function () {
 //     canvas.requestPointerLock();
 //   };
 // }
+//#endregion
 
 function createTank() {
   var tank = new BABYLON.MeshBuilder.CreateBox(
@@ -553,7 +668,7 @@ function createTank() {
   tankMaterial.emissiveColor = new BABYLON.Color3.Blue();
   tank.material = tankMaterial;
   tank.position.y += 2;
-  tank.position.z += -380;
+  tank.position.z += -370;
   tank.speed = 2.0;
   tank.frontVector = new BABYLON.Vector3(0, 0, 1);
   tank.canFireCannonBalls = true;
