@@ -7,10 +7,13 @@ var isAPressed = false;
 var isDPressed = false;
 var isBPressed = false;
 var isRPressed = false;
+let body = document.querySelector("body");
 
 let winBoxAlert = document.createElement("h1");
 winBoxAlert.innerText = "You fucking saved civilization!";
-let body = document.querySelector("body");
+
+let defeatBoxAlert = document.createElement("h1");
+defeatBoxAlert.innerText = "You failed to destroy the Corona Overlords";
 
 document.addEventListener("DOMContentLoaded", startGame);
 
@@ -152,7 +155,6 @@ function startGame() {
     tank.fireLaserBeams();
     var vaccine = scene.getMeshByName("vaccine");
     if (vaccine) {
-      // console.log("vaccine");
       vaccine.move();
     }
     var goodOrb = scene.getMeshByName("goodOrb");
@@ -164,6 +166,21 @@ function startGame() {
       var cloneBadOrb = scene.getMeshByName(`cloneBadOrbs_${elem}`);
       if (cloneBadOrb) {
         cloneBadOrb.move();
+      }
+    });
+    var flyingSaucer = scene.getMeshByName("flyingSaucer");
+    numArray.forEach((elem) => {
+      var badBounderBox = scene.getMeshByName(`badBounder_${elem}`);
+      if (badBounderBox) {
+        if (tank.intersectsMesh(badBounderBox, true)) {
+          if (flyingSaucer) {
+            flyingSaucer.gameLost();
+            var winningBadOrb = scene.getMeshByName(`cloneBadOrbs_${elem}`)
+            winningBadOrb.flexWin()
+            console.log(scene.camera)
+            body.prepend(defeatBoxAlert);
+          }
+        }
       }
     });
 
@@ -226,7 +243,7 @@ var createScene = function () {
   var followCamera = createFollowCamera(scene, tank);
   // scene.activeCamera = freeCamera;
   scene.activeCamera = followCamera;
-  createSky(scene);
+  // createSky(scene);
   createLights(scene);
   createScifiFloor(scene);
   createAtomOrb(scene);
@@ -433,6 +450,13 @@ function createFlyingSaucer(scene, tank) {
       animationGroups[0].start(true);
       meshes[0].scaling = new BABYLON.Vector3(7, 7, 7);
       meshes[0].position = tank.position;
+      meshes[0].name = "flyingSaucer";
+      var flyingSaucer = meshes[0];
+
+      flyingSaucer.gameLost = function () {
+        flyingSaucer.dispose();
+        tank.dispose();
+      };
     }
   );
 }
@@ -479,17 +503,18 @@ function cloneBadOrb(original, skeletons, id) {
   myClone.position = new BABYLON.Vector3(xrand, yrand + 5, zrand);
   var badBounder = BABYLON.MeshBuilder.CreateBox(
     "badBounder_" + id,
-    { height: 8, width: 8, depth: 8 },
+    { height: 5, width: 1, depth: 1 },
     scene
   );
   badBounder.position = myClone.position;
   badBounder.visibility = 0.5;
-  badBounder.checkCollisions = true;
+  myClone.child = badBounder;
+  // badBounder.checkCollisions = true;
   myClone.move = function () {
     myClone.addRotation(0, -0.05 * rotChange, 0);
   };
-  myClone.dispose = function (){
-    myClone.dispose()
+  myClone.flexWin = function (){
+    myClone.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5)
   }
 }
 
@@ -673,7 +698,7 @@ function createTank() {
   tank.frontVector = new BABYLON.Vector3(0, 0, 1);
   tank.canFireCannonBalls = true;
   tank.canFireLaser = true;
-  tank.visibility = false;
+  tank.visibility = true;
   // tank.isPickable = false;
   tank.move = function () {
     if (isWPressed) {
