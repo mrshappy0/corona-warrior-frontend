@@ -598,7 +598,7 @@ function cloneBadOrb(original, skeletons, id) {
     scene
   );
   badBounder.position = myClone.position;
-  badBounder.visibility = true;
+  badBounder.visibility = false;
   let counter = 0;
   myClone.move = function () {
     counter += 0.4;
