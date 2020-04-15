@@ -7,13 +7,14 @@ var isAPressed = false;
 var isDPressed = false;
 var isBPressed = false;
 var isRPressed = false;
+var isLocked = false;
 let body = document.querySelector("body");
 
 let winBoxAlert = document.createElement("h1");
 winBoxAlert.innerText = "You fucking saved civilization!";
 
 let defeatBoxAlert = document.createElement("h1");
-defeatBoxAlert.innerText = "You failed to destroy the Corona Overlords";
+defeatBoxAlert.innerText = "You failed to destroy the Corona Orb Overlords";
 
 document.addEventListener("DOMContentLoaded", startGame);
 
@@ -147,7 +148,7 @@ function startGame() {
   canvas.style.width = "100%";
   canvas.style.height = "100%";
   scene = createScene();
-  // modifySettings();
+  lockZePointer();
   var tank = scene.getMeshByName("heroTank");
   var toRender = function () {
     tank.move();
@@ -173,12 +174,15 @@ function startGame() {
       var badBounderBox = scene.getMeshByName(`badBounder_${elem}`);
       if (badBounderBox) {
         if (tank.intersectsMesh(badBounderBox, true)) {
+          var winningBadOrb = scene.getMeshByName(`cloneBadOrbs_${elem}`);
+          winningBadOrb.flexWin();
           if (flyingSaucer) {
             flyingSaucer.gameLost();
-            var winningBadOrb = scene.getMeshByName(`cloneBadOrbs_${elem}`)
-            winningBadOrb.flexWin()
-            console.log(scene.camera)
             body.prepend(defeatBoxAlert);
+            removeZePointer();
+            setTimeout(function () {
+              engine.stopRenderLoop();
+            }, 2000);
           }
         }
       }
@@ -241,9 +245,9 @@ var createScene = function () {
   var freeCamera = createUniversalCamera(scene);
   var tank = createTank(scene);
   var followCamera = createFollowCamera(scene, tank);
-  // scene.activeCamera = freeCamera;
+  scene.activeCamera = freeCamera;
   scene.activeCamera = followCamera;
-  // createSky(scene);
+  createSky(scene);
   createLights(scene);
   createScifiFloor(scene);
   createAtomOrb(scene);
@@ -503,19 +507,27 @@ function cloneBadOrb(original, skeletons, id) {
   myClone.position = new BABYLON.Vector3(xrand, yrand + 5, zrand);
   var badBounder = BABYLON.MeshBuilder.CreateBox(
     "badBounder_" + id,
-    { height: 5, width: 1, depth: 1 },
+    { height: 5, width: 4, depth: 4 },
     scene
   );
   badBounder.position = myClone.position;
-  badBounder.visibility = 0.5;
-  myClone.child = badBounder;
-  // badBounder.checkCollisions = true;
+  badBounder.visibility = false;
+  // myClone.child = badBounder;
+  let counter = 0;
   myClone.move = function () {
+    counter += 0.4;
     myClone.addRotation(0, -0.05 * rotChange, 0);
+    // myClone.position.x = myClone.position.x + 0.07*Math.sin((counter) / 2)
+    // myClone.position.z = myClone.position.x + 0.07*Math.sin((counter) / 2)
   };
-  myClone.flexWin = function (){
-    myClone.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5)
-  }
+  myClone.flexWin = function () {
+    counter += 0.25;
+    myClone.scaling = new BABYLON.Vector3(
+      0.05 * Math.sin(counter / 2) + 0.3,
+      0.05 * Math.sin(counter / 2) + 0.3,
+      0.05 * Math.sin(counter / 2) + 0.3
+    );
+  };
 }
 
 function createGoodOrb(scene) {
@@ -674,13 +686,30 @@ function doClone(original, skeletons, id) {
     }
   }
 }
-//#region
-// function modifySettings() {
-//   scene.onPointerDown = function () {
-//     canvas.requestPointerLock();
-//   };
-// }
-//#endregion
+
+function lockZePointer() {
+  scene.onPointerDown = function () {
+    if (event.pointerType === "mouse" && event.button === 2) {
+      console.log("hit");
+      if (isLocked) {
+        if (document.exitPointerLock) {
+          document.exitPointerLock();
+          isLocked = false;
+        }
+      }
+    } else if (!isLocked) {
+      if (canvas.requestPointerLock) {
+        canvas.requestPointerLock();
+        isLocked = true;
+      }
+    }
+  };
+}
+function removeZePointer() {
+  scene.onPointerDown = function () {
+    document.exitPointerLock();
+  };
+}
 
 function createTank() {
   var tank = new BABYLON.MeshBuilder.CreateBox(
@@ -698,7 +727,7 @@ function createTank() {
   tank.frontVector = new BABYLON.Vector3(0, 0, 1);
   tank.canFireCannonBalls = true;
   tank.canFireLaser = true;
-  tank.visibility = true;
+  tank.visibility = false;
   // tank.isPickable = false;
   tank.move = function () {
     if (isWPressed) {
