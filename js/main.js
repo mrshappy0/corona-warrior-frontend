@@ -148,6 +148,7 @@ function startGame() {
     tank.move();
     tank.fireCannonBalls();
     tank.fireLaserBeams();
+    var cannonBall = scene.getMeshByName("cannonball")
     var vaccine = scene.getMeshByName("vaccine");
     if (vaccine) {
       vaccine.move();
@@ -159,10 +160,21 @@ function startGame() {
     var flyingSaucer = scene.getMeshByName("flyingSaucer");
     let numArray = [...Array(51).keys()];
     numArray.forEach((elem) => {
-      // rotate badOrbs
+      var badBounderBox = scene.getMeshByName(`badBounder_${elem}`);
       var cloneBadOrb = scene.getMeshByName(`cloneBadOrbs_${elem}`);
       if (cloneBadOrb) {
+        // rotate badOrbs
         cloneBadOrb.move();
+        // detect cannonball strikes
+        var collectedBadOrb = scene.getMeshByName(`cloneBadOrbs_${elem}`);
+        if(cannonBall){
+          if(cannonBall.intersectsMesh(badBounderBox, true)){
+            badBounderBox.dispose();
+            collectedBadOrb.dispose();
+            score += 5;
+            scene.scoreBox.updateScore();
+          }
+        }
       }
 
       // rotate goodOrbs
@@ -172,7 +184,6 @@ function startGame() {
       }
 
       // end game if badOrb hits spaceShip
-      var badBounderBox = scene.getMeshByName(`badBounder_${elem}`);
       if (badBounderBox) {
         if (tank.intersectsMesh(badBounderBox, true)) {
           var winningBadOrb = scene.getMeshByName(`cloneBadOrbs_${elem}`);
@@ -186,6 +197,7 @@ function startGame() {
             }, 2000);
           }
         }
+
       }
 
       // gain points if goodOrb hits spaceship
@@ -252,7 +264,7 @@ var createScene = function () {
   var freeCamera = createUniversalCamera(scene);
   var tank = createTank(scene);
   var followCamera = createFollowCamera(scene, tank);
-  scene.activeCamera = freeCamera;
+  // scene.activeCamera = freeCamera;
   scene.activeCamera = followCamera;
   createSky(scene);
   createLights(scene);
@@ -266,6 +278,18 @@ var createScene = function () {
   createScoreUI(scene, tank);
   return scene;
 };
+
+// function createFakeBox(scene){
+//   var fakeBox = BABYLON.MeshBuilder.CreateBox(
+//     "fakeBox",
+//     { height: 5, width: 5, depth: 5 },
+//     scene
+//   );
+//   fakeBox.position = new BABYLON.Vector3(0, 6, -360)
+//   fakeBox.checkCollisions = true;
+//   fakeBox.name = "fakeFuckingBox"
+//   // return myBox
+// }
 
 function createScoreUI(scene, tank) {
   var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI(
@@ -574,7 +598,7 @@ function cloneBadOrb(original, skeletons, id) {
     scene
   );
   badBounder.position = myClone.position;
-  badBounder.visibility = false;
+  badBounder.visibility = true;
   let counter = 0;
   myClone.move = function () {
     counter += 0.4;
@@ -875,9 +899,9 @@ function createTank() {
       force,
       cannonBall.getAbsolutePosition()
     );
-    cannonBall.actionManager = new BABYLON.ActionManager(scene);
+    // cannonBall.actionManager = new BABYLON.ActionManager(scene);
 
-    // scene.dudes.forEach((dude) => {
+    // scene.badOrbs.forEach((dude) => {
     //   cannonBall.actionManager.registerAction(
     //     new BABYLON.ExecuteCodeAction(
     //       {
