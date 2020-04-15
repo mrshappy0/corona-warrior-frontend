@@ -8,6 +8,7 @@ var isDPressed = false;
 var isBPressed = false;
 var isRPressed = false;
 var isLocked = false;
+var score = 0;
 let body = document.querySelector("body");
 
 let winBoxAlert = document.createElement("h1");
@@ -162,18 +163,25 @@ function startGame() {
     if (goodOrb) {
       goodOrb.move();
     }
+    var flyingSaucer = scene.getMeshByName("flyingSaucer");
     let numArray = [...Array(51).keys()];
     numArray.forEach((elem) => {
+      // rotate badOrbs
       var cloneBadOrb = scene.getMeshByName(`cloneBadOrbs_${elem}`);
       if (cloneBadOrb) {
         cloneBadOrb.move();
       }
-    });
-    var flyingSaucer = scene.getMeshByName("flyingSaucer");
-    numArray.forEach((elem) => {
+
+      // rotate goodOrbs
+      var cloneGoodOrb = scene.getMeshByName(`cloneGoodOrbs_${elem}`);
+      if (cloneGoodOrb) {
+        cloneGoodOrb.move();
+      }
+
+      // end game if badOrb hits spaceShip
       var badBounderBox = scene.getMeshByName(`badBounder_${elem}`);
       if (badBounderBox) {
-        if (tank.intersectsMesh(badBounderBox, true)) {
+        if (tank.intersectsMesh(badBounderBox, false)) {
           var winningBadOrb = scene.getMeshByName(`cloneBadOrbs_${elem}`);
           winningBadOrb.flexWin();
           if (flyingSaucer) {
@@ -186,15 +194,20 @@ function startGame() {
           }
         }
       }
-    });
 
-    numArray.forEach((elem) => {
-      var cloneGoodOrb = scene.getMeshByName(`cloneGoodOrbs_${elem}`);
-      if (cloneGoodOrb) {
-        cloneGoodOrb.move();
+      // gain points if goodOrb hits spaceship
+      var goodBounderBox = scene.getMeshByName(`goodBounder_${elem}`);
+      if (goodBounderBox) {
+        var collectedGoodOrb = scene.getMeshByName(`cloneGoodOrbs_${elem}`);
+        if (tank.intersectsMesh(goodBounderBox, false) && collectedGoodOrb) {
+          collectedGoodOrb.dispose();
+          goodBounderBox.dispose();
+          score += 1;
+          scene.scoreBox.updateScore();
+        }
       }
     });
-    // console.log(tank.position)
+
     const winRangeZ = [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63];
     const winRangeX = [
       -344,
@@ -256,8 +269,49 @@ var createScene = function () {
   createGoodOrb(scene);
   // createHeroDude(scene);
   createRingSystem(scene);
+  createScoreUI(scene);
+  // var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+  // var button1 = BABYLON.GUI.Button.CreateSimpleButton("but1", "Click Me");
+  // button1.width = "150px"
+  // button1.height = "40px";
+  // button1.color = "white";
+  // button1.cornerRadius = 20;
+  // button1.background = "green";
+  // button1.onPointerUpObservable.add(function() {
+  //     alert("you did it!");
+  // });
+  // advancedTexture.addControl(button1);
   return scene;
 };
+
+function createScoreUI(scene) {
+  var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI(
+    "UI"
+  );
+  var rect1 = new BABYLON.GUI.Rectangle();
+  rect1.width = "250px";
+  rect1.height = "40px";
+  rect1.cornerRadius = 20;
+  rect1.color = "Orange";
+  rect1.thickness = 4;
+  rect1.background = "green";
+  rect1.clipChildren = true;
+  advancedTexture.addControl(rect1);
+
+  var text = new BABYLON.GUI.TextBlock();
+  scene.scoreBox = text;
+  text.name = "scoreBox"
+  text.text = `Score: ${score}`;
+  text.left = 0.10;
+  text.textHorizontalAlignment =
+    BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER
+  text.fontSize = 24;
+  rect1.addControl(text);
+  text.updateScore = function (){
+    text.text = `Score: ${score}`
+  }
+}
 
 function createSky(scene) {
   var skybox = BABYLON.Mesh.CreateBox("skyBox", 1000.0, scene);
@@ -512,7 +566,6 @@ function cloneBadOrb(original, skeletons, id) {
   );
   badBounder.position = myClone.position;
   badBounder.visibility = false;
-  // myClone.child = badBounder;
   let counter = 0;
   myClone.move = function () {
     counter += 0.4;
@@ -564,6 +617,13 @@ function cloneGoodOrb(original, skeletons, id) {
   myClone = original.clone("clone_" + id);
   myClone.name = "cloneGoodOrbs_" + id;
   myClone.position = new BABYLON.Vector3(xrand, yrand + 5, zrand);
+  var goodBounder = BABYLON.MeshBuilder.CreateBox(
+    "goodBounder_" + id,
+    { height: 5, width: 4, depth: 4 },
+    scene
+  );
+  goodBounder.position = myClone.position;
+  goodBounder.visibility = false;
   myClone.move = function () {
     myClone.addRotation(0, -0.05 * rotChange, 0);
   };
@@ -690,7 +750,6 @@ function doClone(original, skeletons, id) {
 function lockZePointer() {
   scene.onPointerDown = function () {
     if (event.pointerType === "mouse" && event.button === 2) {
-      console.log("hit");
       if (isLocked) {
         if (document.exitPointerLock) {
           document.exitPointerLock();
