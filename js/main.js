@@ -9,13 +9,6 @@ var isBPressed = false;
 var isRPressed = false;
 var isLocked = false;
 var score = 0;
-let body = document.querySelector("body");
-
-let winBoxAlert = document.createElement("h1");
-winBoxAlert.innerText = "You fucking saved civilization!";
-
-let defeatBoxAlert = document.createElement("h1");
-defeatBoxAlert.innerText = "You failed to destroy the Corona Orb Overlords";
 
 document.addEventListener("DOMContentLoaded", startGame);
 
@@ -181,12 +174,12 @@ function startGame() {
       // end game if badOrb hits spaceShip
       var badBounderBox = scene.getMeshByName(`badBounder_${elem}`);
       if (badBounderBox) {
-        if (tank.intersectsMesh(badBounderBox, false)) {
+        if (tank.intersectsMesh(badBounderBox, true)) {
           var winningBadOrb = scene.getMeshByName(`cloneBadOrbs_${elem}`);
           winningBadOrb.flexWin();
           if (flyingSaucer) {
             flyingSaucer.gameLost();
-            body.prepend(defeatBoxAlert);
+            scene.scoreBox.deathByCorona();
             removeZePointer();
             setTimeout(function () {
               engine.stopRenderLoop();
@@ -197,11 +190,11 @@ function startGame() {
 
       // gain points if goodOrb hits spaceship
       var goodBounderBox = scene.getMeshByName(`goodBounder_${elem}`);
+      var collectedGoodOrb = scene.getMeshByName(`cloneGoodOrbs_${elem}`);
       if (goodBounderBox) {
-        var collectedGoodOrb = scene.getMeshByName(`cloneGoodOrbs_${elem}`);
-        if (tank.intersectsMesh(goodBounderBox, false) && collectedGoodOrb) {
-          collectedGoodOrb.dispose();
+        if (tank.intersectsMesh(goodBounderBox, true)) {
           goodBounderBox.dispose();
+          collectedGoodOrb.dispose();
           score += 1;
           scene.scoreBox.updateScore();
         }
@@ -235,8 +228,9 @@ function startGame() {
       doArrayThang(winRangeZ, Math.round(tank.position.z)) &&
       doArrayThang(winRangeX, Math.round(tank.position.x))
     ) {
+      scene.scoreBox.winBoxYeet();
       engine.stopRenderLoop();
-      body.prepend(winBoxAlert);
+      // body.prepend(winBoxAlert);
     }
 
     // moveGoodOrb();
@@ -269,26 +263,15 @@ var createScene = function () {
   createGoodOrb(scene);
   // createHeroDude(scene);
   createRingSystem(scene);
-  createScoreUI(scene);
-  // var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
-
-  // var button1 = BABYLON.GUI.Button.CreateSimpleButton("but1", "Click Me");
-  // button1.width = "150px"
-  // button1.height = "40px";
-  // button1.color = "white";
-  // button1.cornerRadius = 20;
-  // button1.background = "green";
-  // button1.onPointerUpObservable.add(function() {
-  //     alert("you did it!");
-  // });
-  // advancedTexture.addControl(button1);
+  createScoreUI(scene, tank);
   return scene;
 };
 
-function createScoreUI(scene) {
+function createScoreUI(scene, tank) {
   var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI(
     "UI"
   );
+
   var rect1 = new BABYLON.GUI.Rectangle();
   rect1.width = "250px";
   rect1.height = "40px";
@@ -297,20 +280,46 @@ function createScoreUI(scene) {
   rect1.thickness = 4;
   rect1.background = "green";
   rect1.clipChildren = true;
+  rect1.textHorizontalAlignment =
+    BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
   advancedTexture.addControl(rect1);
+  rect1.linkWithMesh(tank);
 
   var text = new BABYLON.GUI.TextBlock();
   scene.scoreBox = text;
-  text.name = "scoreBox"
   text.text = `Score: ${score}`;
-  text.left = 0.10;
-  text.textHorizontalAlignment =
-    BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER
-  text.fontSize = 24;
+  text.left = 0.1;
+  text.textWrapping = true;
+  text.fontSize = 28;
+  text.fontWeight = "bold";
   rect1.addControl(text);
-  text.updateScore = function (){
-    text.text = `Score: ${score}`
-  }
+  text.updateScore = function () {
+    text.text = `Score: ${score}`;
+  };
+  text.winBoxYeet = function () {
+    if (score === 1) {
+      text.text = `
+        You Saved Civilization and collected ${score} Corona point. Now the thankless humans can continue polluting the planet and oppressing your Alien race. Rejoice!!
+      `;
+    } else {
+      text.text = `
+        You Saved Civilization and collected ${score} Corona points. Now the thankless humans can continue polluting the planet and oppressing your Alien race. Rejoice!!
+      `;
+    }
+    rect1.width = "500px";
+    rect1.height = "250px";
+  };
+  text.deathByCorona = function () {
+    text.text = `
+      The Corona Orb overlords destroyed your ship and took you down with it. Better luck next time!
+    `;
+    rect1.width = "600px";
+    rect1.height = "250px";
+    rect1.background = "red";
+    text.color = "orange"
+    text.font = 40;
+    rect1.color = "white";
+  };
 }
 
 function createSky(scene) {
