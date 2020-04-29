@@ -12,130 +12,6 @@ var score = 0;
 
 document.addEventListener("DOMContentLoaded", startGame);
 
-class Dude {
-  constructor(dudeMesh, speed, id, scene, scaling) {
-    this.dudeMesh = dudeMesh;
-    this.id = id;
-    this.scene = scene;
-    dudeMesh.Dude = this;
-    if (speed) {
-      this.speed = speed;
-    } else {
-      this.speed = 1;
-    }
-    if (scaling) {
-      this.scaling = scaling;
-      this.dudeMesh.scaling = new BABYLON.Vector3(
-        this.scaling,
-        this.scaling,
-        this.scaling
-      );
-    } else {
-      this.scaling = 1;
-    }
-    if (Dude.boundingBoxParameters == undefined) {
-      Dude.boundingBoxParameters = this.CalculateBoundingBoxParameters();
-    }
-    this.bounder = this.createBoundingBox();
-    this.bounder.dudeMesh = this.dudeMesh;
-  }
-  createBoundingBox() {
-    var lengthX = Dude.boundingBoxParameters.lengthX;
-    var lengthY = Dude.boundingBoxParameters.lengthY;
-    var lengthZ = Dude.boundingBoxParameters.lengthZ;
-    var bounder = new BABYLON.Mesh.CreateBox(
-      "bounder" + this.id,
-      1,
-      this.scene
-    );
-    bounder.scaling.x = lengthX * this.scaling;
-    bounder.scaling.y = lengthY * this.scaling;
-    bounder.scaling.z = lengthZ * this.scaling;
-
-    bounder.isVisible = true;
-    var bounderMaterial = new BABYLON.StandardMaterial(
-      "bounderMaterial",
-      this.scene
-    );
-    bounderMaterial.alpha = 0.5;
-    bounder.material = bounderMaterial;
-    bounder.checkCollisions = true;
-
-    (bounder.position = new BABYLON.Vector3(
-      this.dudeMesh.position.x,
-      this.dudeMesh.position.y + (this.scaling * lengthY) / 2
-    )),
-      this.dudeMesh.position.z;
-    return bounder;
-  }
-
-  CalculateBoundingBoxParameters() {
-    var minX = 9999999;
-    var minY = 9999999;
-    var minZ = 9999999;
-    var maxX = -9999999;
-    var maxY = -9999999;
-    var maxZ = -9999999;
-
-    var children = this.dudeMesh.getChildren();
-
-    for (var i = 0; i < children.length; i++) {
-      var positions = new BABYLON.VertexData.ExtractFromGeometry(children[i])
-        .positions;
-      if (!positions) continue;
-      for (var j = 0; j < positions.length; j += 3) {
-        if (positions[j] < minX) {
-          minX = positions[j];
-        }
-        if (positions[j] > maxX) {
-          maxX = positions[j];
-        }
-      }
-      for (var j = 1; j < positions.length; j += 3) {
-        if (positions[j] < minY) {
-          minY = positions[j];
-        }
-        if (positions[j] > maxY) {
-          maxY = positions[j];
-        }
-      }
-      for (var j = 2; j < positions.length; j += 3) {
-        if (positions[j] < minZ) {
-          minZ = positions[j];
-        }
-        if (positions[j] > maxZ) {
-          maxZ = positions[j];
-        }
-      }
-      var _lengthX = maxX - minX;
-      var _lengthY = maxY - minY;
-      var _lengthZ = maxZ - minZ;
-    }
-    return { lengthX: _lengthX, lengthY: _lengthY, lengthZ: _lengthZ };
-  }
-
-  move() {
-    if (!this.bounder) return;
-    this.dudeMesh.position = new BABYLON.Vector3(
-      this.bounder.position.x,
-      this.bounder.position.y -
-        (this.scaling * Dude.boundingBoxParameters.lengthY) / 2,
-      this.bounder.position.z
-    );
-    var tank = scene.getMeshByName("heroTank");
-    var direction = tank.position.subtract(this.dudeMesh.position);
-    var distance = direction.length();
-    var dir = direction.normalize();
-    var alpha = Math.atan2(-1 * dir.x, -1 * dir.z);
-    this.dudeMesh.rotation.y = alpha;
-    if (distance > 30) {
-      this.bounder.moveWithCollisions(
-        dir.multiplyByFloats(this.speed, this.speed, this.speed)
-      );
-    }
-  }
-}
-
 function startGame() {
   canvas = document.getElementById("renderCanvas");
   engine = new BABYLON.Engine(canvas, true);
@@ -158,7 +34,7 @@ function startGame() {
       goodOrb.move();
     }
     var flyingSaucer = scene.getMeshByName("flyingSaucer");
-    let numArray = [...Array(51).keys()];
+    let numArray = [...Array(21).keys()];
     numArray.forEach((elem) => {
       var badBounderBox = scene.getMeshByName(`badBounder_${elem}`);
       var cloneBadOrb = scene.getMeshByName(`cloneBadOrbs_${elem}`);
@@ -242,12 +118,7 @@ function startGame() {
     ) {
       scene.scoreBox.winBoxYeet();
       engine.stopRenderLoop();
-      // body.prepend(winBoxAlert);
     }
-
-    // moveGoodOrb();
-    // moveHeroDude();
-    // moveOtherDudes();
 
     scene.render();
   };
@@ -273,7 +144,6 @@ var createScene = function () {
   createFlyingSaucer(scene, tank);
   createBadOrb(scene);
   createGoodOrb(scene);
-  // createHeroDude(scene);
   createRingSystem(scene);
   createScoreUI(scene, tank);
   return scene;
@@ -393,7 +263,6 @@ function CreateGround(scene) {
       { width: 800, height: 400 },
       scene
     );
-    // stoneFloor.position.y = 1
     stoneFloor.rotate(BABYLON.Axis.X, Math.PI / 2, BABYLON.Space.WORLD);
     stoneFloor.position.y = 0.3;
     stoneFloor.position.z = -200;
@@ -411,7 +280,6 @@ function CreateGround(scene) {
       { width: 800, height: 400 },
       scene
     );
-    // stoneFloor.position.y = 1
     stoneFloor.rotate(BABYLON.Axis.X, Math.PI / 2, BABYLON.Space.WORLD);
     stoneFloor.position.y = 0.3;
     stoneFloor.position.z = 205;
@@ -486,9 +354,6 @@ function createUniversalCamera(scene) {
   camera.keysRight.push("D".charCodeAt(0));
   camera.keysLeft.push("a".charCodeAt(0));
   camera.keysLeft.push("A".charCodeAt(0));
-  // scene.onPointerPick = function() {
-  //   console.log(camera.position);
-  // };
   return camera;
 }
 
@@ -561,7 +426,7 @@ function createBadOrb(scene) {
     onBadOrbImport
   );
   function onBadOrbImport(meshes, particleSystems, skeletons) {
-    meshes[0].position = new BABYLON.Vector3(50, 10, 30);
+    meshes[0].position = new BABYLON.Vector3(50, -10, 30);
     meshes[0].scaling = new BABYLON.Vector3(0.15, 0.15, 0.15);
     var coronaOrbMaterial = new BABYLON.StandardMaterial(
       "badOrbMaterial",
@@ -576,7 +441,7 @@ function createBadOrb(scene) {
     var badOrb = meshes[0];
     scene.badOrbs = [];
     scene.badOrbs[0] = badOrb;
-    for (var q = 1; q <= 50; q++) {
+    for (var q = 1; q <= 20; q++) {
       scene.badOrbs[q] = cloneBadOrb(badOrb, skeletons, q);
     }
   }
@@ -598,13 +463,13 @@ function cloneBadOrb(original, skeletons, id) {
     scene
   );
   badBounder.position = myClone.position;
+
   badBounder.visibility = false;
   let counter = 0;
   myClone.move = function () {
     counter += 0.4;
     myClone.addRotation(0, -0.05 * rotChange, 0);
-    // myClone.position.x = myClone.position.x + 0.07*Math.sin((counter) / 2)
-    // myClone.position.z = myClone.position.x + 0.07*Math.sin((counter) / 2)
+
   };
   myClone.flexWin = function () {
     counter += 0.25;
@@ -626,7 +491,7 @@ function createGoodOrb(scene) {
   );
   function onOrbImport(meshes, particleSystems, skeletons) {
     meshes[0].scaling = new BABYLON.Vector3(-0.035, 0.035, 0.035);
-    meshes[0].position = new BABYLON.Vector3(-17, 10, 30);
+    meshes[0].position = new BABYLON.Vector3(-17, -10, 30);
     meshes[0].name = "goodOrb";
     var goodOrb = meshes[0];
     goodOrb.move = function () {
@@ -634,7 +499,7 @@ function createGoodOrb(scene) {
     };
     scene.goodOrbs = [];
     scene.goodOrbs[0] = goodOrb;
-    for (var q = 1; q <= 50; q++) {
+    for (var q = 1; q <= 20; q++) {
       scene.goodOrbs[q] = cloneGoodOrb(goodOrb, skeletons, q);
     }
   }
@@ -690,9 +555,7 @@ function createRingSystem(scene) {
     { height: 70, width: 25, depth: 285 },
     scene
   );
-  // m.scaling.copyFrom(size);
   m.position = new BABYLON.Vector3(20, 2, 157);
-  // m.visibility = 0.5;
   m.checkCollisions = true;
   m.rotation.y = (1 * Math.PI) / 180;
   m.visibility = false;
@@ -702,13 +565,9 @@ function createRingSystem(scene) {
     { height: 70, width: 25, depth: 285 },
     scene
   );
-  // m.scaling.copyFrom(size);
   n.position = new BABYLON.Vector3(-42, 2, 157);
-  // m.visibility = 0.5;
   n.checkCollisions = true;
-  // m.rotation.z = 0.14;
   n.rotation.y = -((2 * Math.PI) / 180);
-  // m.rotate.x = 1
   n.visibility = false;
 }
 
@@ -720,64 +579,6 @@ function createHeroDude(scene) {
     scene,
     onDudeImported
   );
-  function onDudeImported(newMeshes, particleSystems, skeletons) {
-    newMeshes[0].position = new BABYLON.Vector3(50, 0, 0); // The original dude
-    newMeshes[0].name = "heroDude";
-    var heroDude = newMeshes[0];
-    for (var i = 1; i < heroDude.getChildren().length; i++) {
-      // console.log(heroDude.getChildren()[i].name);
-      heroDude.getChildren()[i].name = "clone_".concat(
-        heroDude.getChildren()[i].name
-      );
-      // console.log(heroDude.getChildren()[i].name);
-    }
-    // heroDude.scaling = new BABYLON.Vector3(0.2, 0.2, 0.2);
-    heroDude.speed = 0.1;
-    scene.beginAnimation(skeletons[0], 0, 120, true, 1.0);
-    var hero = new Dude(heroDude, 2, -1, scene, 0.2);
-    scene.dudes = [];
-    scene.dudes[0] = heroDude;
-    for (var q = 1; q <= 10; q++) {
-      scene.dudes[q] = doClone(heroDude, skeletons, q);
-      scene.beginAnimation(scene.dudes[q].skeleton, 0, 120, true, 1.0);
-      var temp = new Dude(scene.dudes[q], 2, q, scene, 0.2);
-    }
-  }
-}
-
-function doClone(original, skeletons, id) {
-  var myClone;
-  var xrand = Math.floor(Math.random() * 501) - 250;
-  var zrand = Math.floor(Math.random() * 501) - 250;
-  myClone = original.clone("clone_" + id);
-  myClone.position = new BABYLON.Vector3(xrand, 0, zrand);
-  if (!skeletons) {
-    return myClone;
-  } else {
-    if (!original.getChildren()) {
-      myClone.skeleton = skeletons[0].clone("clone_" + id + " _skeleton");
-      return myClone;
-    } else {
-      if (skeletons.length == 1) {
-        // this means on skeleton controlling/animating all the children
-        var clonedSkeleton = skeletons[0].clone("clone_" + id + "_skeleton");
-        myClone.skeleton = clonedSkeleton;
-        var numChildren = myClone.getChildren().length;
-        for (var i = 0; i < numChildren; i++) {
-          myClone.getChildren()[i].skeleton = clonedSkeleton;
-        }
-        return myClone;
-      } else if (skeletons.length == original.getChildren().length) {
-        //Most probably each child has its own skeleton
-        for (var i = 0; i < myClone.getChildren().length; i++) {
-          myClone.getChildren()[i].skeleton = skeletons[i].clone(
-            "clone_" + id + "skeleton_" + i
-          );
-        }
-        return myClone;
-      }
-    }
-  }
 }
 
 function lockZePointer() {
@@ -899,28 +700,13 @@ function createTank() {
       force,
       cannonBall.getAbsolutePosition()
     );
-    // cannonBall.actionManager = new BABYLON.ActionManager(scene);
-
-    // scene.badOrbs.forEach((dude) => {
-    //   cannonBall.actionManager.registerAction(
-    //     new BABYLON.ExecuteCodeAction(
-    //       {
-    //         trigger: BABYLON.ActionManager.OnIntersectionEnterTrigger,
-    //         parameter: dude.Dude.bounder,
-    //       },
-    //       () => {
-    //         dude.Dude.bounder.dispose();
-    //         dude.dispose();
-    //       }
-    //     )
-    //   );
-    // });
 
     setTimeout(function () {
       cannonBall.dispose();
     }, 3000);
   };
 
+  //#region
   tank.fireLaserBeams = function () {
     var tank = this;
     if (!isRPressed) return;
@@ -970,7 +756,7 @@ function createTank() {
     }
     // console.log(pickInfo.pickedMesh.name) sometimes the bounder sometimes the mesh
   };
-
+  //#endregion
   return tank;
 }
 document.addEventListener("keydown", function () {
@@ -1014,21 +800,6 @@ document.addEventListener("keyup", function () {
     isRPressed = false;
   }
 });
-
-function moveHeroDude() {
-  var heroDude = scene.getMeshByName("heroDude");
-  if (heroDude) {
-    heroDude.Dude.move();
-  }
-}
-
-function moveOtherDudes() {
-  if (scene.dudes) {
-    for (var q = 0; q < scene.dudes.length; q++) {
-      scene.dudes[q].Dude.move();
-    }
-  }
-}
 
 // Resize
 window.addEventListener("resize", function (camera) {
