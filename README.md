@@ -1,4 +1,4 @@
-## Welcome to Corona Warrior!
+## Welcome to [Corona Warrior](https://corona-warrior.web.app)!
 Corona Warrior is a 3D game. The landscape is a maze. The maze was built using GIMP to draw a heightmap maze. You play as a misunderstood escaped Alien trying to save the world from COVID-19 pandemic. Bad Corona Orbs are floating throughout the map. If your ship runs into them You will die and lose the game. You can shoot them with fireballs to destroy them. Along your journey you will discover Good Corona bottle caps that will give you extra points. The end of the game concludes when you find the hidden vaccine.
 
 **Important Notes**
